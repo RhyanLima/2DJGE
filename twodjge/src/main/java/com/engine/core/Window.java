@@ -1,19 +1,28 @@
 package com.engine.core;
 
 import org.lwjgl.Version;
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.GLFW_FALSE;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE;
 import static org.lwjgl.glfw.GLFW.GLFW_MAXIMIZED;
 import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
 import static org.lwjgl.glfw.GLFW.GLFW_TRUE;
 import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
 import static org.lwjgl.glfw.GLFW.glfwDefaultWindowHints;
+import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
+import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetScrollCallback;
 import static org.lwjgl.glfw.GLFW.glfwShowWindow;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
+import static org.lwjgl.glfw.GLFW.glfwTerminate;
 import static org.lwjgl.glfw.GLFW.glfwWindowHint;
 import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -23,16 +32,12 @@ import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
 public class Window {
 
     private int width, height;
     private String title;
     private long glfwWindow;
+    private float r,g,b,a;
 
     private static Window window = null;
 
@@ -41,12 +46,17 @@ public class Window {
         this.width = 1920;
         this.height = 1080;
         this.title = "game";
+        r = 0;
+        g = 0;
+        b = 0;
+        a = 0;
+
     }
 
     // Garante que apenas uma instancia seja Criada
     public static Window get()
     {
-        if(Window.window == null)
+        if (Window.window == null)
         {
             Window.window = new Window();
         }
@@ -59,6 +69,14 @@ public class Window {
 
         init();
         loop();
+
+        // Limpando Mémoria
+        glfwFreeCallbacks(glfwWindow);
+        glfwDestroyWindow(glfwWindow);
+
+        // Encerra GLFW e limpa a função callback de erro
+        glfwTerminate();
+        glfwSetErrorCallback(null).free();
     }
 
     public void init()
@@ -67,7 +85,7 @@ public class Window {
         GLFWErrorCallback.createPrint(System.err).set();
 
         // Inicialização do GLFW
-        if(!glfwInit())
+        if (!glfwInit())
         {
             throw new IllegalStateException("Unable to Initialize GLFW");
         }
@@ -85,6 +103,14 @@ public class Window {
         {
             throw new IllegalStateException("Falied to create the GLFW window.");
         }
+
+        // Mouse Listener
+        glfwSetCursorPosCallback(glfwWindow, MouseListener::mousePosCallback);
+        glfwSetMouseButtonCallback(glfwWindow, MouseListener::mouseButtonCallback);
+        glfwSetScrollCallback(glfwWindow, MouseListener::mouseScrollCallback);
+
+        // Key Listener
+        glfwSetKeyCallback(glfwWindow, KeyListener::keyCallback);
 
         // Criando o OpenGL context current
         glfwMakeContextCurrent(glfwWindow);
@@ -109,8 +135,13 @@ public class Window {
         {
             glfwPollEvents();
 
-            glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+            glClearColor(r, g, b, a);
             glClear(GL_COLOR_BUFFER_BIT);
+
+            if (KeyListener.isKeyPressed(GLFW_KEY_SPACE))
+            {
+                System.out.println("Space key is pressed!");
+            }
 
             glfwSwapBuffers(glfwWindow);
         }
