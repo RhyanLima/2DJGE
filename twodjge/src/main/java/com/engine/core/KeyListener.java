@@ -3,16 +3,14 @@ package com.engine.core;
 import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
 public class KeyListener {
 
     public static KeyListener instance;
 
     private boolean KeyPressed[] = new boolean[350];
-
-    private KeyListener()
-    {
-
-    }
 
     public static KeyListener get()
     {
